@@ -3,6 +3,7 @@ from threading import Thread
 import output
 import encode_decode
 
+
 class Proposer_Thread(Thread):
     def __init__(self, ip, port):
         Thread.__init__(self)
@@ -10,13 +11,24 @@ class Proposer_Thread(Thread):
         self.port = port
 
     def run(self):
-        while True:
-            try:
-                data = encode_decode.recvfrom(conn)
-            except ConnectionResetError:
-                print("Connection closed by client")
-                break
-            print("Server received data:", data)
+        try:
+            data = encode_decode.recvfrom(conn)
+        except ConnectionResetError:
+            print("Connection closed by client")
+            return
+        print("Server received data:", data)
+        self.connect_acceptor(data)
+        encode_decode.sendto(conn,"SUCCESS")
+
+    def connect_acceptor(self,data):
+        s = socket.socket()
+        ip = "127.0.0.1"
+        port=9500
+        s.connect((ip, port))
+        retval = encode_decode.recvfrom(s)
+        encode_decode.sendto(s,data)
+        retval = encode_decode.recvfrom(s)
+        print(retval)
 
 
 TCP_IP = '127.0.0.1'

@@ -20,13 +20,16 @@ class client:
     def connect_Learner(self,port):
         s = socket.socket()
         s.connect(('127.0.0.1', port))
-        print(s.recv(1024))
-        s.close()
+        retval = encode_decode.recvfrom(s)
+        print(retval)
+        return s
 
 if __name__ == "__main__":
     c = client()
     Proposer_socket = None
+    Learner_socket =  None
     connected_to_proposer = 0
+
     while(True):
         print(":::::::::::PAXOS CLIENT:::::::::::")
         print("Choose accordingly")
@@ -38,14 +41,6 @@ if __name__ == "__main__":
         print("6: Disconnect from the Learner")
         print("7: EXIT")
         choice = input()
-
-        if choice=='7':
-            exit(0)
-
-        if choice=='4':
-            print("Insert port of a Learner")
-            port = int(input())
-            c.connect_Learner(port)
 
         if choice =='1':
             print("Insert port of a proposer to connect")
@@ -69,3 +64,18 @@ if __name__ == "__main__":
         if choice == '3':
             connected_to_proposer=0
 
+        if choice=='4':
+            print("Insert port of a Learner")
+            port = int(input())
+            Learner_socket =  c.connect_Learner(port)
+
+        if choice=='5':
+            print("Insert key")
+            key = input("key:")
+            string =  "SEARCH "+key
+            encode_decode.sendto(Learner_socket,string)
+            retval = encode_decode.recvfrom(Learner_socket)
+            print(retval)
+
+        if choice=='7':
+            exit(0)

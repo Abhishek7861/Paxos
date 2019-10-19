@@ -1,28 +1,62 @@
 import socket
+from threading import Thread
 import output
-import threading
+import encode_decode
 
-class Learner:
-    def __init__(self):
+data_store = {
+    "key":"value"
+}
+
+class Learner_Thread(Thread):
+    def __init__(self, ip, port):
+        Thread.__init__(self)
+        self.ip = ip
+        self.port = port
+
+    def run(self):
+        try:
+            data = encode_decode.recvfrom(conn)
+        except ConnectionResetError:
+            print("Connection closed")
+            return
+        print(data)
+        decoded_data = data.split()
+        if decoded_data[0]=="SEARCH":
+            if data_store.get(decoded_data[1]):
+                value = data_store[decoded_data[1]]
+                string = "FOUND!! key:"+decoded_data[1]+" value:"+value
+                encode_decode.sendto(conn, string)
+            else:
+                string = "NOT FOUND!!"
+                encode_decode.sendto(conn, string)
+        if decoded_data[0] =="STORE":
+            print("Stored")
+            string = "SUCCESS!!"
+            encode_decode.sendto(conn, string)
+
+    def connect_acceptor(self):
         pass
 
-    def Learner_server(self,port):
-        s = socket.socket()
-        s.bind(('', port))
-        s.listen(5)
-        while True:
-            output.print_running("Ready for accepting ... ")
-            c, addr = s.accept()
-            output.print_success('Got connection from '+str(addr))
-            c.send(b'Thank you for connecting')
-            c.close()
 
-if __name__ == "__main__":
-    print(":::::::::::LEARNER::::::::::")
-    print("What is the port number of the Learner")
-    port = int(input())
+TCP_IP = '127.0.0.1'
+TCP_PORT = 9000
+BUFFER_SIZE = 20
 
-L = Learner()
-t1 = threading.Thread(target=L.Learner_server(port))
-t1.start()
-t1.join()
+tcpServer = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+tcpServer.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+tcpServer.bind((TCP_IP, TCP_PORT))
+threads = []
+
+while True:
+    tcpServer.listen(5)
+    print("Listening ...")
+    (conn, (ip, port)) = tcpServer.accept()
+    print("got connection from ", ip, port)
+    conn.send(b"SUCCESS")
+    newthread = Learner_Thread(ip, port)
+    newthread.start()
+    threads.append(newthread)
+
+for t in threads:
+    t.join()
+
