@@ -57,6 +57,4 @@ while True:
     newthread.start()
     threads.append(newthread)
 
-for t in threads:
-    t.join()
 

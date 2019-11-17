@@ -1,22 +1,13 @@
-import colorama
-from colorama import Fore, Back, Style
+from termcolor import colored
 
-def print_failure(text):
-    print(Fore.RED + text)
-    Style.RESET_ALL
+def print_success(string):
+    print(colored(string,'green'))
 
-def print_success(text):
-    print(Fore.GREEN+ text)
-    Style.RESET_ALL
+def print_primary(string):
+    print(colored(string,'blue'))
 
-def print_normal(text):
-    print(Fore.BLACK + text)
-    Style.RESET_ALL
+def print_failure(string):
+    print(colored(string,'red'))
 
-def print_running(text):
-    print(Fore.YELLOW + text)
-    Style.RESET_ALL
-
-
-
-
+def print_running(string):
+    print(colored(string,'yellow'))

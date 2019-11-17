@@ -1,18 +1,61 @@
-# Python TCP Client A
-import socket
+import sqlite3
+import output
 
-host = socket.gethostname()
-port = 2004
-BUFFER_SIZE = 2000
-MESSAGE = input("tcpClientA: Enter message/ Enter exit:")
+def insert_proposer(IP,PORT):
+    conn = sqlite3.connect('paxos.db')
+    c = conn.cursor()
+    try:
+        c.execute("INSERT INTO proposers VALUES ('"+IP+"','"+str(PORT)+"')")
+    except sqlite3.IntegrityError:
+        output.print_failure("Already used Port")
+    conn.commit()
+    c.close()
 
-tcpClientA = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-tcpClientA.connect((host, port))
+def insert_acceptor(IP,PORT):
+    conn = sqlite3.connect('paxos.db')
+    c = conn.cursor()
+    try:
+        c.execute("INSERT INTO acceptors VALUES ('"+IP+"','"+str(PORT)+"')")
+    except sqlite3.IntegrityError:
+        output.print_failure("Already used Port")
+    conn.commit()
+    c.close()
 
-while MESSAGE != 'exit':
-    tcpClientA.send(b"message")
-    data = tcpClientA.recv(BUFFER_SIZE)
-    print(" Client2 received data:", data)
-    MESSAGE = input("tcpClientA: Enter message to continue/ Enter exit:")
+def get_proposers():
+    conn = sqlite3.connect('paxos.db')
+    c = conn.cursor()
+    result = c.execute("SELECT * FROM proposers")
+    return result
+    conn.commit()
+    c.close()
 
-tcpClientA.close()
+def get_proposers_count():
+    conn = sqlite3.connect('paxos.db')
+    c = conn.cursor()
+    result = c.execute("SELECT count(*) FROM proposers")
+    return (result.fetchone())[0]
+    conn.commit()
+    c.close()
+
+
+def get_acceptors():
+    conn = sqlite3.connect('paxos.db')
+    c = conn.cursor()
+    result = c.execute("SELECT * FROM acceptors")
+    return result
+    conn.commit()
+    c.close()
+
+conn = sqlite3.connect('paxos.db')
+c = conn.cursor()
+try:
+    c.execute('''CREATE TABLE proposers
+             (IP text,Port int  PRIMARY KEY )''')
+    c.execute('''CREATE TABLE acceptors
+             (IP text ,Port int  PRIMARY KEY )''')
+    c.execute('''CREATE TABLE learners
+             (IP text ,Port int  PRIMARY KEY )''')
+except sqlite3.OperationalError:
+    print("DATABASE READY")
+c.close()
+

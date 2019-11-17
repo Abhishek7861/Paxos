@@ -1,6 +1,7 @@
 import socket
 import output
 import encode_decode
+from test import *
 
 class client:
     def __init__(self):
@@ -26,8 +27,8 @@ class client:
 
 if __name__ == "__main__":
     c = client()
-    Proposer_socket = None
-    Learner_socket =  None
+    Proposer_socket = []
+    Learner_socket =  []
     connected_to_proposer = 0
 
     while(True):
@@ -43,11 +44,13 @@ if __name__ == "__main__":
         choice = input()
 
         if choice =='1':
-            print("Insert port of a proposer to connect")
-            port = int(input())
-            Proposer_socket = c.connect_Proposer(port)
-            connected_to_proposer=1
-
+            result = get_proposers()
+            for i in result:
+                try:
+                    Proposer_socket.append(c.connect_Proposer(i[1]))
+                    connected_to_proposer=1
+                except ConnectionRefusedError:
+                    continue
 
         if choice == '2':
             if connected_to_proposer == 0:
@@ -57,9 +60,17 @@ if __name__ == "__main__":
                 key = input("key::   ")
                 value = input("value::   ")
                 string = "STORE "+key+" "+value
-                encode_decode.sendto(Proposer_socket,string)
-                retval = encode_decode.recvfrom(Proposer_socket)
-                print(retval)
+                for fd in Proposer_socket:
+                    encode_decode.sendto(fd,string)
+                retval=False
+                for fd in Proposer_socket:
+                    val = encode_decode.recvfrom(fd)
+                    if val == "SUCCESS":
+                        retval=retval or True
+                if retval:
+                    output.print_success("Stored")
+                connected_to_proposer = 0
+
 
         if choice == '3':
             connected_to_proposer=0
