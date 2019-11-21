@@ -5,6 +5,7 @@ import encode_decode
 import configparser
 from test import *
 import random
+import time
 
 base=0
 
@@ -27,7 +28,7 @@ class Proposer_Thread(Thread):
                 continue
                 flag=False
             else:
-                self.connect_acceptor(data)
+                self.connect_acceptor(data.split())
                 flag=False
 
     def connect_acceptor(self,data):
@@ -35,7 +36,8 @@ class Proposer_Thread(Thread):
         ipport = []
         global base
         global conn
-        base = base+random.randrange(1,50)
+        valuepair = data
+        base = time.time()
         data = "PREPARE "+str(base)
         result = get_acceptors()
         for i in result:
@@ -55,7 +57,7 @@ class Proposer_Thread(Thread):
             retval = retval.split()
         if retval[0]=='PROMISE':
             output.print_success(retval)
-            data = "ACCEPT-REQUEST "+str(base)
+            data = "ACCEPT-REQUEST "+str(base)+" "+valuepair[1]+" "+valuepair[2]
             for fd in acceptor_socket:
                 encode_decode.sendto(fd, data)
             for fd in acceptor_socket:
@@ -63,7 +65,7 @@ class Proposer_Thread(Thread):
                 print(retval)
             encode_decode.sendto(conn, "SUCCESS")
         elif retval[0]=='ACCEPT':
-            base = int(retval[1])
+            base = float(retval[1])
             encode_decode.sendto(conn, "FAILED")
 
 

@@ -68,12 +68,31 @@ if __name__ == "__main__":
                     if val == "SUCCESS":
                         retval=retval or True
                 if retval:
-                    output.print_success("Stored")
+                    output.print_success("Stored: "+key+" "+value)
                 connected_to_proposer = 0
 
-
         if choice == '3':
-            connected_to_proposer=0
+            valuepairlist=[]
+            if connected_to_proposer == 0:
+                print("FIRST CONNECT TO PROPOSER!!")
+            else:
+                for i in Proposer_socket:
+                    print("insert a key value pair")
+                    key = input("key::   ")
+                    value = input("value::   ")
+                    string = "STORE "+key+" "+value
+                    valuepairlist.append(string)
+                for fd in range(len(Proposer_socket)):
+                    encode_decode.sendto(Proposer_socket[fd],valuepairlist[fd])
+                retval=False
+                for fd in range(len(Proposer_socket)):
+                    val = encode_decode.recvfrom(Proposer_socket[fd])
+                    if val == "SUCCESS":
+                        output.print_success("Stored: "+valuepairlist[fd])
+                    else:
+                        output.print_failure("failed: "+valuepairlist[fd])
+                connected_to_proposer = 0
+
 
         if choice=='4':
             print("Insert port of a Learner")

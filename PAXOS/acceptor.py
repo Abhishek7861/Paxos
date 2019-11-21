@@ -21,7 +21,7 @@ def find_min():
     output.print_success(data)
     data = data.split()
     if data[0]=="ACCEPT-REQUEST":
-        data = "ACCEPT "+str(min(rcvd_msgs))
+        data = "ACCEPT "+str(min(rcvd_msgs))+" "+data[2]+" "+data[3]
         for fd in proposer_fds:
             encode_decode.sendto(fd,data)
 
@@ -42,7 +42,7 @@ class Acceptor_Thread(Thread):
         print("Server received data:", data)
         data = data.split()
         lock.acquire()
-        rcvd_msgs.append(int(data[1]))
+        rcvd_msgs.append(float(data[1]))
         lock.release()
 
 
