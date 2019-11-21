@@ -2,6 +2,7 @@ import socket
 from threading import Thread
 import output
 import encode_decode
+from test import *
 
 data_store = {
     "key":"value"
@@ -15,7 +16,25 @@ class Learner_Thread(Thread):
 
     def run(self):
         try:
-            data = encode_decode.recvfrom(conn)
+            proposer_socket=[]
+            ipport = []
+            global base
+            global conn
+            # valuepair = data
+            # base = time.time()
+            # data = "PREPARE "+str(base)
+            result = get_proposers()
+            for i in result:
+                s = socket.socket()
+                ipport.append(i)
+                proposer_socket.append(s)
+            for fd in proposer_socket:
+                i = ipport.pop()
+                fd.connect((i[0],i[1]))
+                retval = encode_decode.recvfrom(fd)
+                output.print_running(retval)
+            # data = encode_decode.recvfrom(conn)
+            data=retval
         except ConnectionResetError:
             print("Connection closed")
             return
@@ -41,6 +60,7 @@ class Learner_Thread(Thread):
 TCP_IP = '127.0.0.1'
 TCP_PORT = 9000
 BUFFER_SIZE = 20
+insert_learner(TCP_IP,TCP_PORT)
 
 tcpServer = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 tcpServer.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)

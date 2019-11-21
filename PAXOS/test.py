@@ -1,11 +1,11 @@
 import sqlite3
 import output
 
-def insert_proposer(IP,PORT):
+def insert_proposer(IP,PORT,delay1):
     conn = sqlite3.connect('paxos.db')
     c = conn.cursor()
     try:
-        c.execute("INSERT INTO proposers VALUES ('"+IP+"','"+str(PORT)+"')")
+        c.execute("INSERT INTO proposers VALUES ('"+IP+"','"+str(PORT)+"','"+str(delay1)+"   ')")
     except sqlite3.IntegrityError:
         output.print_failure("Already used Port")
     conn.commit()
@@ -16,6 +16,17 @@ def insert_acceptor(IP,PORT):
     c = conn.cursor()
     try:
         c.execute("INSERT INTO acceptors VALUES ('"+IP+"','"+str(PORT)+"')")
+    except sqlite3.IntegrityError:
+        output.print_failure("Already used Port")
+    conn.commit()
+    c.close()
+
+
+def insert_learner(IP,PORT):
+    conn = sqlite3.connect('paxos.db')
+    c = conn.cursor()
+    try:
+        c.execute("INSERT INTO learners VALUES ('"+IP+"','"+str(PORT)+"')")
     except sqlite3.IntegrityError:
         output.print_failure("Already used Port")
     conn.commit()
@@ -45,12 +56,19 @@ def get_acceptors():
     return result
     conn.commit()
     c.close()
+def get_learners():
+    conn = sqlite3.connect('paxos.db')
+    c = conn.cursor()
+    result = c.execute("SELECT * FROM learners")
+    return result
+    conn.commit()
+    c.close()
 
 conn = sqlite3.connect('paxos.db')
 c = conn.cursor()
 try:
     c.execute('''CREATE TABLE proposers
-             (IP text,Port int  PRIMARY KEY )''')
+             (IP text,Port int  PRIMARY KEY,delay1 int )''')
     c.execute('''CREATE TABLE acceptors
              (IP text ,Port int  PRIMARY KEY )''')
     c.execute('''CREATE TABLE learners

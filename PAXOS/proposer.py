@@ -50,6 +50,9 @@ class Proposer_Thread(Thread):
             retval = encode_decode.recvfrom(fd)
             output.print_running(retval)
         for fd in acceptor_socket:
+            print("Sleeping",delay1)
+            time.sleep(delay1)
+            print(" END Sleeping")
             encode_decode.sendto(fd,data)
         for fd in acceptor_socket:
             retval = encode_decode.recvfrom(fd)
@@ -67,14 +70,54 @@ class Proposer_Thread(Thread):
         elif retval[0]=='ACCEPT':
             base = float(retval[1])
             encode_decode.sendto(conn, "FAILED")
+            data1=" STORE "+valuepair[1]+" "+valuepair[2]
+            self.connect_learner(data1)
 
+    def connect_learner(self,data):
+        learner_socket=[]
+        ipport = []
+        global base
+        global conn
+        # valuepair = data
+        # base = time.time()
+        # data = "PREPARE "+str(base)
+        result = get_learners()
+        for i in result:
+            s = socket.socket()
+            ipport.append(i)
+            learner_socket.append(s)
+        # for fd in learner_socket:
+            # i = ipport.pop()
+            # fd.connect((i[0],i[1]))
+            # retval = encode_decode.recvfrom(fd)
+            # output.print_running(retval)
+        for fd in learner_socket:
+            encode_decode.sendto(fd,data)
+        for fd in learner_socket:
+            retval = encode_decode.recvfrom(fd)
+            output.print_running(retval)
+            # retval = retval.split()
+        # if 
+        #     data = "ACCEPT-REQUEST "+str(base)+" "+valuepair[1]+" "+valuepair[2]
+        #     for fd in acceptor_socket:
+        #         encode_decode.sendto(fd, data)
+        #     for fd in acceptor_socket:
+        #         retval = encode_decode.recvfrom(fd)
+        #         print(retval)
+        #     encode_decode.sendto(conn, "SUCCESS")
+        # elif retval[0]=='ACCEPT':
+        #     base = float(retval[1])
+        #     encode_decode.sendto(conn, "FAILED")
 
 output.print_success(":::::::::::::PAXOS PROPOSER:::::::::::::::")
 print("Insert I.P. Address of Proposer Node")
 TCP_IP = input()
 print("Insert Port number of Proposer Node")
 TCP_PORT = int(input())
-insert_proposer(TCP_IP,TCP_PORT)
+print("Insert Delay if any else 0")
+delay1 = int(input())
+
+insert_proposer(TCP_IP,TCP_PORT,delay1)
 tcpServer = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 tcpServer.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 tcpServer.bind((TCP_IP, TCP_PORT))
