@@ -30,6 +30,7 @@ if __name__ == "__main__":
     Proposer_socket = []
     Learner_socket =  []
     connected_to_proposer = 0
+    connected_to_learner = 0
 
     while(True):
         print(":::::::::::PAXOS CLIENT:::::::::::")
@@ -69,7 +70,10 @@ if __name__ == "__main__":
                         retval=retval or True
                 if retval:
                     output.print_success("Stored: "+key+" "+value)
+                else:
+                    output.print_failure("FAILED")
                 connected_to_proposer = 0
+                Proposer_socket = []
 
         if choice == '3':
             valuepairlist=[]
@@ -92,20 +96,35 @@ if __name__ == "__main__":
                     else:
                         output.print_failure("failed: "+valuepairlist[fd])
                 connected_to_proposer = 0
+                Proposer_socket = []
 
 
         if choice=='4':
-            print("Insert port of a Learner")
-            port = int(input())
-            Learner_socket =  c.connect_Learner(port)
+            result = get_learners()
+            print("select one of the learners")
+            k=0
+            ipport = []
+            for i in result:
+                ipport.append(i)
+                print(str(k)+":",i)
+                k=k+1
+            index = int(input())
+            fd = ipport[index]
+            Learner_socket  = c.connect_Learner(fd[1])
+            connected_to_learner=1
+
+
 
         if choice=='5':
-            print("Insert key")
-            key = input("key:")
-            string =  "SEARCH "+key
-            encode_decode.sendto(Learner_socket,string)
-            retval = encode_decode.recvfrom(Learner_socket)
-            print(retval)
+            if connected_to_learner==1:
+                print("Insert key")
+                key = input("key:")
+                string =  "READ "+key
+                encode_decode.sendto(Learner_socket,string)
+                retval = encode_decode.recvfrom(Learner_socket)
+                print(retval)
+            else:
+                print("connect to learner")
 
         if choice=='7':
             exit(0)

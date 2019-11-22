@@ -6,11 +6,14 @@ from test import *
 import time
 rcvd_msgs = []
 lock = Lock()
+nlock = Lock()
+n = 0
 
 
 def find_min():
     global proposer_fds
     global rcvd_msgs
+    global lock
     lock.acquire()
     a = rcvd_msgs.index(min(rcvd_msgs))
     lock.release()
@@ -24,6 +27,41 @@ def find_min():
         data = "ACCEPT "+str(min(rcvd_msgs))+" "+data[2]+" "+data[3]
         for fd in proposer_fds:
             encode_decode.sendto(fd,data)
+        result = get_learners()
+        ipport = []
+        learner_socket = []
+        for i in result:
+            s = socket.socket()
+            ipport.append(i)
+            learner_socket.append(s)
+        for fd in learner_socket:
+            i = ipport.pop()
+            try:
+                fd.connect((i[0],i[1]))
+            except ConnectionRefusedError:
+                output.print_failure("Learner not running")
+                return
+            retval = encode_decode.recvfrom(fd)
+            output.print_running(retval)
+        for fd in learner_socket:
+            encode_decode.sendto(fd, data)
+        for fd in learner_socket:
+            retval = encode_decode.recvfrom(fd)
+            output.print_running(retval)
+
+class update_n(Thread):
+    def __init__(self):
+        Thread.__init__(self)
+
+    def run(self):
+            global n
+            global nlock
+            while (1):
+                nlock.acquire()
+                n = get_proposers_count()
+                # print(n)
+                nlock.release()
+                time.sleep(1)
 
 
 class Acceptor_Thread(Thread):
@@ -57,7 +95,7 @@ class Acceptor_Thread(Thread):
         print(retval)
 
 
-output.print_success(":::::::::::::PAXOS ACCEPTOR:::::::::::::::")
+output.print_running(":::::::::::::PAXOS ACCEPTOR:::::::::::::::")
 print("Insert I.P. Address of Acceptor Node")
 TCP_IP = input()
 print("Insert Port number of Acceptor Node")
@@ -69,13 +107,15 @@ tcpServer.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 tcpServer.bind((TCP_IP, TCP_PORT))
 threads = []
 proposer_fds = []
+newthread = update_n()
+newthread.start()
+threads.append(newthread)
 
-n = get_proposers_count()
-print(n)
+count=0
 while True:
-    for i in range(n):
         tcpServer.listen(5)
-        print("Listening ...")
+        output.print_running("Listening ...")
+        count = count+1
         (conn, (ip, port)) = tcpServer.accept()
         proposer_fds.append(conn)
         print("got connection from ",ip,port)
@@ -83,10 +123,12 @@ while True:
         newthread = Acceptor_Thread(ip, port)
         newthread.start()
         threads.append(newthread)
-    time.sleep(1)
-    find_min()
-    proposer_fds.clear()
-    rcvd_msgs.clear()
+        if count ==n:
+            time.sleep(1)
+            find_min()
+            count=0
+            proposer_fds.clear()
+            rcvd_msgs.clear()
     # encode_decode.sendto(proposer_fds[0], "SUCCESS")
     # for j in range(1,n):
     #     encode_decode.sendto(proposer_fds[j], "FAILURE")

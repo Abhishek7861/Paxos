@@ -1,13 +1,26 @@
-import logging
-import output
+import signal
+import sys
+import time
+from threading import *
 
-logging.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
-    datefmt='%Y-%m-%d:%H:%M:%S',
-    level=logging.DEBUG)
+class temp(Thread):
+    def __init__(self):
+        Thread.__init__(self)
 
-logger = logging.getLogger(__name__)
+    def run(self):
+        while (1):
+            time.sleep(2)
+            print("hello")
 
-output.print_success(logger.debug("This is a debug log"))
-logger.info("This is an info log")
-logger.critical("This is critical")
-logger.error("An error occurred")
+
+new = temp()
+new.start()
+
+def signal_handler(signal, frame):
+    print('You pressed Ctrl+C!')
+    exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
+print('Press Ctrl+C')
+forever = Event()
+forever.wait()

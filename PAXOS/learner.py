@@ -4,62 +4,13 @@ import output
 import encode_decode
 from test import *
 
-data_store = {
-    "key":"value"
-}
+data_store = {}
 
-class Learner_Thread(Thread):
-    def __init__(self, ip, port):
-        Thread.__init__(self)
-        self.ip = ip
-        self.port = port
-
-    def run(self):
-        try:
-            proposer_socket=[]
-            ipport = []
-            global base
-            global conn
-            # valuepair = data
-            # base = time.time()
-            # data = "PREPARE "+str(base)
-            result = get_proposers()
-            for i in result:
-                s = socket.socket()
-                ipport.append(i)
-                proposer_socket.append(s)
-            for fd in proposer_socket:
-                i = ipport.pop()
-                fd.connect((i[0],i[1]))
-                retval = encode_decode.recvfrom(fd)
-                output.print_running(retval)
-            # data = encode_decode.recvfrom(conn)
-            data=retval
-        except ConnectionResetError:
-            print("Connection closed")
-            return
-        print(data)
-        decoded_data = data.split()
-        if decoded_data[0]=="SEARCH":
-            if data_store.get(decoded_data[1]):
-                value = data_store[decoded_data[1]]
-                string = "FOUND!! key:"+decoded_data[1]+" value:"+value
-                encode_decode.sendto(conn, string)
-            else:
-                string = "NOT FOUND!!"
-                encode_decode.sendto(conn, string)
-        if decoded_data[0] =="STORE":
-            print("Stored")
-            string = "SUCCESS!!"
-            encode_decode.sendto(conn, string)
-
-    def connect_acceptor(self):
-        pass
-
-
-TCP_IP = '127.0.0.1'
-TCP_PORT = 9000
-BUFFER_SIZE = 20
+output.print_running(":::::::::::::PAXOS LEARNER:::::::::::::::")
+print("Insert I.P. Address of Learner Node")
+TCP_IP = input()
+print("Insert Port number of Learner Node")
+TCP_PORT = int(input())
 insert_learner(TCP_IP,TCP_PORT)
 
 tcpServer = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -69,12 +20,26 @@ threads = []
 
 while True:
     tcpServer.listen(5)
-    print("Listening ...")
+    output.print_running("Listening ...")
     (conn, (ip, port)) = tcpServer.accept()
     print("got connection from ", ip, port)
     conn.send(b"SUCCESS")
-    newthread = Learner_Thread(ip, port)
-    newthread.start()
-    threads.append(newthread)
-
+    try:
+        data = encode_decode.recvfrom(conn)
+    except ConnectionResetError:
+        print("Connection closed by client")
+    print("Server received data:", data)
+    print(data)
+    data = data.split()
+    if data[0]=="ACCEPT":
+        data_store[data[2]] = data[3]
+        encode_decode.sendto(conn,"STORED")
+    if data[0]=="READ":
+        try:
+            retval = data_store[data[1]]
+            output.print_failure("Key found")
+            encode_decode.sendto(conn,retval)
+        except KeyError:
+            output.print_failure("Key not found")
+            encode_decode.sendto(conn,"Key not found")
 
