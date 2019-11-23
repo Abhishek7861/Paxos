@@ -14,10 +14,12 @@ def find_min():
     global proposer_fds
     global rcvd_msgs
     global lock
+    if len(rcvd_msgs) == 0:
+        return
     lock.acquire()
     a = rcvd_msgs.index(min(rcvd_msgs))
     lock.release()
-    data = "PROMISE " + str(min(rcvd_msgs))
+    data = "PROMISE " + str(max(rcvd_msgs))
     encode_decode.sendto(proposer_fds[a], data)
     output.print_success(data)
     data = encode_decode.recvfrom(proposer_fds[a])
@@ -79,6 +81,8 @@ class Acceptor_Thread(Thread):
             return
         print("Server received data:", data)
         data = data.split()
+        if data[0]=="EXIT":
+            return
         lock.acquire()
         rcvd_msgs.append(float(data[1]))
         lock.release()

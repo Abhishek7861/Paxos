@@ -37,7 +37,7 @@ if __name__ == "__main__":
         print("Choose accordingly")
         print("1: Connect to the proposer")
         print("2: Write a value for the Proposer")
-        print("3: Disconnect from the Proposer")
+        print("3: Send different value to each proposer")
         print("4: Connect to the Learner")
         print("5: Read a value from the Learner")
         print("6: Disconnect from the Learner")

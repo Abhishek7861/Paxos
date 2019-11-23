@@ -80,6 +80,7 @@ class Proposer_Thread(Thread):
             s = socket.socket()
             ipport.append(i)
             acceptor_socket.append(s)
+        acceptor_count = len(acceptor_socket)
         for j in range(len(acceptor_socket)):
             i = ipport.pop()
             try:
@@ -91,9 +92,11 @@ class Proposer_Thread(Thread):
                 continue
             retval = encode_decode.recvfrom(acceptor_socket[j])
         # print(len(acceptor_socket2))
-        if len(acceptor_socket2)==0:
+        if len(acceptor_socket2)/acceptor_count<0.5:
             encode_decode.sendto(self.conn,"No acceptor running")
-            output.print_failure("No acceptor running")
+            output.print_failure("Majority acceptor not running")
+            for fd in acceptor_socket2:
+                encode_decode.sendto(fd, "EXIT")
             return
         for fd in acceptor_socket2:
             encode_decode.sendto(fd,data)
